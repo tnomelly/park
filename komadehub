@@ -1,0 +1,119 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("KoMadeUs Hub", "Midnight")
+
+-- Create the main tab
+local MainTab = Window:NewTab("Main")
+
+-- Create a section with a button
+local Section = MainTab:NewSection("Important")
+
+Section:NewToggle("HBE", "ToggleInfo", function(state)
+    for _, balls in pairs(game.Workspace.Balls:GetChildren()) do
+        if balls.Name == "Ball" then
+            balls.Size = state and Vector3.new(3.7, 3.7, 3.7) or Vector3.new(1.6, 1.6, 1.6)
+        end
+    end
+end)
+
+Section:NewSlider("ballspeed", "this changes your speed with the ball default ~70", 90, 71, function(num) 
+	if pcall(function() RunService:UnbindFromRenderStep("ballspeed") end) then RunService:UnbindFromRenderStep("ballspeed") end
+	RunService:BindToRenderStep("ballspeed", Enum.RenderPriority.Camera.Value, function()
+		game:GetService("Players").LocalPlayer.Info.Stats.SpeedBall.Value = num
+	end)  
+end)
+
+local ankles_c = 0
+local fall_c = 0
+
+local function manipulateAnkles()
+    pcall(function()
+        for _, c in pairs(getconnections(actions.OnClientEvent)) do
+            local constants = debug.getconstants(c.Function)
+            ankles_c = table.find(constants, "Ankles")
+            fall_c = table.find(constants, "Fall")
+
+            debug.setconstant(c.Function, ankles_c, "")
+            debug.setconstant(c.Function, fall_c, "")
+        end
+    end)
+end
+
+local function revertAnklesManipulation()
+    pcall(function()
+        for _, c in pairs(getconnections(actions.OnClientEvent)) do
+            debug.setconstant(c.Function, ankles_c, "Ankles")
+            debug.setconstant(c.Function, fall_c, "Fall")
+        end
+    end)
+end
+
+Section:NewToggle("Manipulate Ankles", "Toggle to manipulate ankles", function(state)
+    if state then
+        manipulateAnkles()
+    else
+        revertAnklesManipulation()
+    end
+end)
+
+-- Create another section for more buttons
+local Section2 = MainTab:NewSection("Join people")
+
+Section2:NewTextBox("Join Anyone", "Enter username to join their game", function(txt)
+    playerToJoin = txt
+end)
+
+Section2:NewButton("Join", "Join the specified player's game", function()
+    local targetPlayer = game.Players:FindFirstChild(playerToJoin)
+
+    if targetPlayer then
+        local targetPlaceId = targetPlayer.PlaceId
+        game:GetService("TeleportService"):TeleportToPlaceInstance(targetPlaceId, targetPlayer)
+    else
+        print("Player not found")
+    end
+end)
+
+
+
+
+-- Stats page
+local statsTab = Window:NewTab("Stats")
+local statsSection = statsTab:NewSection("Check Stats")
+
+local statCheckUsername = nil
+local wl = statsSection:NewLabel("wins/losses")
+local arch = statsSection:NewLabel("build information")
+local secondarch = statsSection:NewLabel("second build info")
+
+statsSection:NewTextBox("USERNAME", "The username of the player you want to stat check", function(txt)
+    statCheckUsername = txt
+end)
+
+statsSection:NewButton("check stats", "Checks stats", function()
+    local player = game.Players:FindFirstChild(statCheckUsername)
+    if player then
+        local wins = player.Info.GameStats.W.Value
+        local primary = player.Info.Profile.Position.Archetype.Value
+        local secondary = player.Info.Profile.Position.SecondArchetype.Value
+        local totalGames = player.Info.GameStats.TotalGames.Value
+        local losses = totalGames - wins
+        wl:UpdateLabel("wins: " .. tostring(wins) .. " losses: " .. tostring(losses))
+        arch:UpdateLabel("primary arch: " .. primary)
+        secondarch:UpdateLabel("secondary arch: " .. secondary)
+    else
+        wl:UpdateLabel("Player not found")
+        arch:UpdateLabel("")
+        secondarch:UpdateLabel("")
+    end
+end)
+
+local SettingsTab = Window:NewTab("Settings")
+local SettingsSection = SettingsTab:NewSection("Settings Section")
+
+SettingsSection:NewToggle("Toggle Setting", "Toggle description", function(state)
+    print("Toggle state:", state)
+end)
+
+SettingsSection:NewSlider("Slider Setting", "Slider description", 0, 100, 50, function(value)
+    print("Slider value:", value)
+end)
